@@ -176,9 +176,8 @@ class RecurringExpenseServiceTest {
                 endDate
         );
 
-        // Act & Assert - Assuming RecurringExpense.create() validates the date range
         assertThrows(
-                Exception.class, // Replace with the specific exception your domain throws
+                Exception.class,
                 () -> recurringExpenseService.createRecurringExpense(command)
         );
     }
