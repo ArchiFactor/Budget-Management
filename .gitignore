@@ -1,6 +1,12 @@
 .DS_Store
 .idea/
 .vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.apt_generated_tests/
 /target/
 budget-management.mv.db
 budget-management.trace.db
