@@ -4,18 +4,23 @@ import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.exceptions.ForbiddenOperationDomainException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Transient;
 
 @Entity
 @DiscriminatorValue("GROUP")
 public class GroupPiggyBank extends PiggyBank {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id")
-    private Group group;
+    @Transient
+	private Group group;
+	@Column(name = "group_id")
+	private Long groupId;
 
     protected GroupPiggyBank() {
 
@@ -24,6 +29,7 @@ public class GroupPiggyBank extends PiggyBank {
     private GroupPiggyBank(String name, Money targetAmount, ExpenseCategory category, Group group) {
         super(name, targetAmount, category);
         this.group = group;
+		this.groupId = group != null ? group.getId() : null;
         group.addPiggyBank(this);
     }
 
@@ -46,16 +52,28 @@ public class GroupPiggyBank extends PiggyBank {
     }
 
     public Group getGroup() {
-        return group;
-    }
+		if (group == null && groupId != null && ServiceFactory.isContainerAvailable()) {
+			GroupService groupService = ServiceFactory.getGroupService();
+			group = groupService.getGroupById(groupId);
+		}
+		return group;
+	}
 
     @Override
     public boolean isAuthorizedUser(User user) {
-        return this.group.getMembers().contains(user);
+        return this.getGroup().getMembers().contains(user);
     }
 
     @Override
     public boolean canBeDissolvedBy(User user) {
-        return this.group.getAdmin().equals(user);
+        return this.getGroup().getAdmin().equals(user);
     }
+
+	@PrePersist
+	@PreUpdate
+	private void syncUnmappedForeignKeys() {
+		if (this.group != null) {
+			this.groupId = this.group.getId();
+		}
+	}
 }

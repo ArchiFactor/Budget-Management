@@ -19,6 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "groups")
@@ -35,8 +36,8 @@ public class Group {
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<GroupPiggyBank> piggyBanks = new HashSet<>();
+    @Transient
+	private Set<GroupPiggyBank> piggyBanks = new HashSet<>();
 
     @ManyToMany
     @JoinTable(
@@ -94,13 +95,21 @@ public class Group {
     }
 
     public Set<GroupPiggyBank> getPiggyBanks() {
-        return Collections.unmodifiableSet(piggyBanks);
+        return Collections.unmodifiableSet(this.getPiggyBanksInner());
     }
 
     void addPiggyBank(GroupPiggyBank piggyBank) {
         if (piggyBank == null) {
             throw new InvalidDomainArgumentException("PiggyBank cannot be null");
         }
-        piggyBanks.add(piggyBank);
+        this.getPiggyBanksInner().add(piggyBank);
     }
+
+	private Set<GroupPiggyBank> getPiggyBanksInner() {
+		if (piggyBanks.isEmpty() && id != null && ServiceFactory.isContainerAvailable()) {
+			GroupPiggyBankService groupPiggyBankService = ServiceFactory.getGroupPiggyBankService();
+			piggyBanks.addAll(groupPiggyBankService.getGroupPiggyBanksByGroupId(id));
+		}
+		return piggyBanks;
+	}
 }

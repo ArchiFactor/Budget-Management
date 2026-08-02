@@ -1,0 +1,132 @@
+{
+  "tool": "ArchiFactor",
+  "manifestVersion": 1,
+  "refactoring": "Unmap JPA Relationships",
+  "description": "The JPA relationship mappings listed below were unmapped: each association field was made @Transient and is now lazy-loaded through a generated service. Owning sides keep the relationship data in a new foreign-key or element-collection field. The database schema is unchanged, so native SQL queries are unaffected; only object-model queries (JPQL, Criteria API, derived query methods) that traverse the unmapped associations are broken. Relationships that declared cascade or orphanRemoval additionally lose that lifecycle propagation, recorded per relationship under 'droppedSemantics'.",
+  "generatedAt": "2026-08-02T09:41:52.031596400Z",
+  "framework": "Quarkus",
+  "serviceFactoryClass": "gr.aueb.budgetmanagement.domain.entities.ServiceFactory",
+  "unmappedRelationships": [
+    {
+      "fromEntity": "gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank",
+      "fieldName": "user",
+      "relationshipType": "ManyToOne",
+      "toEntity": "gr.aueb.budgetmanagement.domain.entities.User",
+      "toEntityIdField": "id",
+      "owningSide": true,
+      "newForeignKeyField": {
+        "name": "userId",
+        "type": "Long",
+        "columnName": "user_id"
+      },
+      "lazyLoadServiceMethod": {
+        "service": "gr.aueb.budgetmanagement.domain.entities.UserService",
+        "method": "User getUserById(Long id)"
+      }
+    },
+    {
+      "fromEntity": "gr.aueb.budgetmanagement.domain.entities.PiggyBankAllocation",
+      "fieldName": "user",
+      "relationshipType": "ManyToOne",
+      "toEntity": "gr.aueb.budgetmanagement.domain.entities.User",
+      "toEntityIdField": "id",
+      "owningSide": true,
+      "newForeignKeyField": {
+        "name": "userId",
+        "type": "Long",
+        "columnName": "user_id"
+      },
+      "lazyLoadServiceMethod": {
+        "service": "gr.aueb.budgetmanagement.domain.entities.UserService",
+        "method": "User getUserById(Long id)"
+      }
+    },
+    {
+      "fromEntity": "gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank",
+      "fieldName": "group",
+      "relationshipType": "ManyToOne",
+      "toEntity": "gr.aueb.budgetmanagement.domain.entities.Group",
+      "toEntityIdField": "id",
+      "owningSide": true,
+      "newForeignKeyField": {
+        "name": "groupId",
+        "type": "Long",
+        "columnName": "group_id"
+      },
+      "lazyLoadServiceMethod": {
+        "service": "gr.aueb.budgetmanagement.domain.entities.GroupService",
+        "method": "Group getGroupById(Long id)"
+      }
+    },
+    {
+      "fromEntity": "gr.aueb.budgetmanagement.domain.entities.Group",
+      "fieldName": "piggyBanks",
+      "relationshipType": "OneToMany",
+      "toEntity": "gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank",
+      "toEntityIdField": "id",
+      "owningSide": false,
+      "targetForeignKeyField": "groupId",
+      "droppedSemantics": {
+        "cascade": ["ALL"],
+        "orphanRemoval": true,
+        "note": "The ORM no longer propagates these lifecycle operations. The database foreign-key constraints are unchanged, so a parent delete may now fail or leave orphan rows. A test failing because of this is a semantics loss, not a broken query."
+      },
+      "lazyLoadServiceMethod": {
+        "service": "gr.aueb.budgetmanagement.domain.entities.GroupPiggyBankService",
+        "method": "List<GroupPiggyBank> getGroupPiggyBanksByGroupId(Long groupId)"
+      }
+    },
+    {
+      "fromEntity": "gr.aueb.budgetmanagement.domain.entities.User",
+      "fieldName": "piggyBanks",
+      "relationshipType": "OneToMany",
+      "toEntity": "gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank",
+      "toEntityIdField": "id",
+      "owningSide": false,
+      "targetForeignKeyField": "userId",
+      "droppedSemantics": {
+        "cascade": ["ALL"],
+        "orphanRemoval": true,
+        "note": "The ORM no longer propagates these lifecycle operations. The database foreign-key constraints are unchanged, so a parent delete may now fail or leave orphan rows. A test failing because of this is a semantics loss, not a broken query."
+      },
+      "lazyLoadServiceMethod": {
+        "service": "gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBankService",
+        "method": "List<PersonalPiggyBank> getPersonalPiggyBanksByUserId(Long userId)"
+      }
+    }
+  ],
+  "generatedServices": [
+    {
+      "entity": "gr.aueb.budgetmanagement.domain.entities.User",
+      "interface": "gr.aueb.budgetmanagement.domain.entities.UserService",
+      "implementation": "gr.aueb.budgetmanagement.domain.entities.UserServiceImpl",
+      "methods": [
+        "User getUserById(Long id)"
+      ]
+    },
+    {
+      "entity": "gr.aueb.budgetmanagement.domain.entities.Group",
+      "interface": "gr.aueb.budgetmanagement.domain.entities.GroupService",
+      "implementation": "gr.aueb.budgetmanagement.domain.entities.GroupServiceImpl",
+      "methods": [
+        "Group getGroupById(Long id)"
+      ]
+    },
+    {
+      "entity": "gr.aueb.budgetmanagement.domain.entities.GroupPiggyBank",
+      "interface": "gr.aueb.budgetmanagement.domain.entities.GroupPiggyBankService",
+      "implementation": "gr.aueb.budgetmanagement.domain.entities.GroupPiggyBankServiceImpl",
+      "methods": [
+        "List<GroupPiggyBank> getGroupPiggyBanksByGroupId(Long groupId)"
+      ]
+    },
+    {
+      "entity": "gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBank",
+      "interface": "gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBankService",
+      "implementation": "gr.aueb.budgetmanagement.domain.entities.PersonalPiggyBankServiceImpl",
+      "methods": [
+        "List<PersonalPiggyBank> getPersonalPiggyBanksByUserId(Long userId)"
+      ]
+    }
+  ]
+}

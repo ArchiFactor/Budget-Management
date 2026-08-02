@@ -12,8 +12,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "piggy_bank_allocations")
@@ -33,9 +36,11 @@ public class PiggyBankAllocation {
     @JoinColumn(name = "piggy_bank_id", nullable = false)
     private PiggyBank piggyBank;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Transient
+	private User user;
+
+	@Column(name = "user_id")
+	private Long userId;
 
     protected PiggyBankAllocation() {
 
@@ -88,6 +93,18 @@ public class PiggyBankAllocation {
     }
 
     public User getUser() {
-        return user;
-    }
+		if (user == null && userId != null && ServiceFactory.isContainerAvailable()) {
+			UserService userService = ServiceFactory.getUserService();
+			user = userService.getUserById(userId);
+		}
+		return user;
+	}
+
+	@PrePersist
+	@PreUpdate
+	private void syncUnmappedForeignKeys() {
+		if (this.user != null) {
+			this.userId = this.user.getId();
+		}
+	}
 }

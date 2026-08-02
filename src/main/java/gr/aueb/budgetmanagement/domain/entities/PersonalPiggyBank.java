@@ -3,18 +3,23 @@ package gr.aueb.budgetmanagement.domain.entities;
 import gr.aueb.budgetmanagement.domain.enums.ExpenseCategory;
 import gr.aueb.budgetmanagement.domain.exceptions.InvalidDomainArgumentException;
 import gr.aueb.budgetmanagement.domain.valueobjects.Money;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Transient;
 
 @Entity
 @DiscriminatorValue("PERSONAL")
 public class PersonalPiggyBank extends PiggyBank {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Transient
+	private User user;
+	@Column(name = "user_id")
+	private Long userId;
 
     protected PersonalPiggyBank() {
 
@@ -23,6 +28,7 @@ public class PersonalPiggyBank extends PiggyBank {
     private PersonalPiggyBank(String name, Money targetAmount, ExpenseCategory category, User user) {
         super(name, targetAmount, category);
         this.user = user;
+		this.userId = user != null ? user.getId() : null;
         user.addPiggyBank(this);
     }
 
@@ -35,16 +41,28 @@ public class PersonalPiggyBank extends PiggyBank {
     }
 
     public User getUser() {
-        return user;
-    }
+		if (user == null && userId != null && ServiceFactory.isContainerAvailable()) {
+			UserService userService = ServiceFactory.getUserService();
+			user = userService.getUserById(userId);
+		}
+		return user;
+	}
 
     @Override
     public boolean isAuthorizedUser(User user) {
-        return this.user.equals(user);
+        return this.getUser().equals(user);
     }
 
     @Override
     public boolean canBeDissolvedBy(User user) {
-        return this.user.equals(user);
+        return this.getUser().equals(user);
     }
+
+	@PrePersist
+	@PreUpdate
+	private void syncUnmappedForeignKeys() {
+		if (this.user != null) {
+			this.userId = this.user.getId();
+		}
+	}
 }

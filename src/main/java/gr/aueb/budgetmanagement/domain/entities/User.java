@@ -30,6 +30,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "users")
@@ -66,8 +67,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecurringIncome> recurringIncomes = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PersonalPiggyBank> piggyBanks = new HashSet<>();
+    @Transient
+	private Set<PersonalPiggyBank> piggyBanks = new HashSet<>();
 
     @OneToMany(mappedBy = "invitee", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Invitation> invitations = new HashSet<>();
@@ -257,14 +258,14 @@ public class User {
     }
 
     public Set<PersonalPiggyBank> getPiggyBanks() {
-        return Collections.unmodifiableSet(piggyBanks);
+        return Collections.unmodifiableSet(this.getPiggyBanksInner());
     }
 
     void addPiggyBank(PersonalPiggyBank piggyBank) {
         if (piggyBank == null) {
             throw new InvalidDomainArgumentException("PiggyBank cannot be null");
         }
-        piggyBanks.add(piggyBank);
+        this.getPiggyBanksInner().add(piggyBank);
     }
 
     public Set<Invitation> getInvitations() {
@@ -291,7 +292,7 @@ public class User {
         List<BalanceImpact> financialEntities = new ArrayList<>();
         financialEntities.addAll(incomes);
         financialEntities.addAll(expenses);
-        financialEntities.addAll(piggyBanks);
+        financialEntities.addAll(this.getPiggyBanksInner());
         financialEntities.add(savings);
 
         return financialEntities.stream()
@@ -318,4 +319,12 @@ public class User {
     public int hashCode() {
         return Objects.hash(username, email);
     }
+
+	private Set<PersonalPiggyBank> getPiggyBanksInner() {
+		if (piggyBanks.isEmpty() && id != null && ServiceFactory.isContainerAvailable()) {
+			PersonalPiggyBankService personalPiggyBankService = ServiceFactory.getPersonalPiggyBankService();
+			piggyBanks.addAll(personalPiggyBankService.getPersonalPiggyBanksByUserId(id));
+		}
+		return piggyBanks;
+	}
 }
